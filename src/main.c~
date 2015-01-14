@@ -1,0 +1,142 @@
+#include "./main.h"
+
+#define CAM
+
+int main(void){
+
+  int ret = 0;
+  int j;  
+
+  client_setup();  
+  ret = pthread_create(&lrf_cmd_thread_t, NULL, lrf_cmd_thread, NULL);
+  if(ret != 0){
+    perror("lrf_com_thread create");
+    exit(-1);
+  } else puts("Create lrf_com_thread");
+
+#ifdef CAM 
+  cap = cvCaptureFromCAM(0);
+  if(cap == NULL){
+    perror("cap cvCaptureFromCAM");
+    exit(-1);
+  }
+  src_img = cvQueryFrame(cap);
+  src_img_out = cvCreateImage(cvSize(400,300), IPL_DEPTH_8U, 3);
+  hsv_img = cvCreateImage(cvGetSize(src_img), IPL_DEPTH_8U, 3);
+  cut_img = cvCreateImage(cvGetSize(src_img), IPL_DEPTH_8U, 3);
+  cut_img_out = cvCreateImage(cvSize(400,300), IPL_DEPTH_8U, 3);
+
+
+#endif
+ 
+  for(j=0; j<NUM_OF_TCP; j++){
+    lrf_img[j] = cvCreateImage(cvSize(LRF_WINDOW_SIZE,LRF_WINDOW_SIZE), IPL_DEPTH_8U, 3);
+  }
+  //////////////////////////////////////////////////////////////////////////////
+  //MAIN LOOP
+  ////////////////////////////////////////////////////////////////////////////
+  while(1){
+    for(j=0; j<NUM_OF_TCP; j++){
+      pthread_mutex_lock(&lrf_cmd_mtx);
+      memcpy(&lrf_cmd_data_cpy[j], &lrf_cmd_data[j], sizeof(lrf_cmd));
+      pthread_mutex_unlock(&lrf_cmd_mtx);
+    }
+
+    for(j=0; j<NUM_OF_TCP; j++){
+      lrf_show(lrf_img[j], lrf_cmd_data_cpy[j], max_dist[j], lrf_window_name[j]);
+      cvMoveWindow(lrf_window_name[j], LRF_WINDOW_SIZE*j+25*(j+1),10);
+    }
+
+
+#ifdef CAM
+    src_img = cvQueryFrame(cap);
+    cvResize(src_img, src_img_out);	
+    cvLine(src_img_out,cvPoint(src_img_out->width/2,0), cvPoint(src_img_out->width/2,src_img_out->height),CV_RGB(255,0,0),2,8,0);  
+    cvLine(src_img_out,cvPoint(0,src_img_out->height/2), cvPoint(src_img_out->width,src_img_out->height/2),CV_RGB(255,0,0),2,8,0);  
+
+    cvCvtColor(src_img, hsv_img, CV_BGR2HSV);
+    
+    cut_vision(hsv_img, cut_img, lrf_cmd_data_cpy[0]);
+    vote_compiler(cut_img);
+
+    cvCvtColor(cut_img, cut_img, CV_HSV2BGR);
+    cvResize(cut_img, cut_img_out);	
+
+    cvShowImage("src_img", src_img_out);
+    cvShowImage("cut_img", cut_img_out);
+    cvMoveWindow("src_img", 400,0);
+    cvMoveWindow("cut_img", 400, src_img_out->height);
+#endif
+
+    if(cvWaitKey(1) == 27)
+      break;    
+  }
+
+  cvDestroyWindow("src_img");
+  cvDestroyWindow("cut_img");
+  cvReleaseCapture(&cap);
+  cvReleaseImage(&src_img);
+  cvReleaseImage(&hsv_img);
+  cvReleaseImage(&cut_img);
+ 
+  for(j=0; j<NUM_OF_TCP; j++){
+    cvDestroyWindow(lrf_window_name[j]);
+    cvReleaseImage(&lrf_img[j]);
+  }
+
+  return 0;
+}
+
+void* lrf_cmd_thread(void* arg)
+{
+  const static char send_flg = '1';
+  static char lrf_cmd_str_buf[5000];
+  static char *lrf_cmd_str[1100];
+  static lrf_cmd lrf_cmd_data_buf;
+  static int i,j; 
+  static int Rcvd_Bytes;
+
+  for(i=0;i<1100;i++){
+    lrf_cmd_str[i] = (char *)malloc(10);
+  }
+
+  puts("Start the communication");
+  while(1){
+    for(j=0; j<NUM_OF_TCP; j++){
+      for(i=0; i<5000; i+=Rcvd_Bytes){
+	while(1){
+	  if( (Rcvd_Bytes = recv(sock[j], &lrf_cmd_str_buf[i], 250, 0)) < 0 ){
+	    tcp_retry("recv()"); 
+	  }
+	  else break;
+	}
+      }
+
+      if(char2lrf_cmd(&lrf_cmd_data_buf, lrf_cmd_str, lrf_cmd_str_buf) > 0){
+
+	if(0 < lrf_cmd_data_buf.lrf_data_max && lrf_cmd_data_buf.lrf_data_max < 1082){
+	  pthread_mutex_lock(&lrf_cmd_mtx);
+	  lrf_cmd_data[j].lrf_data_max = lrf_cmd_data_buf.lrf_data_max;
+	  pthread_mutex_unlock(&lrf_cmd_mtx);
+	}
+
+	pthread_mutex_lock(&lrf_cmd_mtx);      
+	for(i=0; i<1081; i++){
+	  if(0 < lrf_cmd_data_buf.lrf_data[i] && lrf_cmd_data_buf.lrf_data[i] < 60001){
+	    lrf_cmd_data[j].lrf_data[i] = lrf_cmd_data_buf.lrf_data[i];
+	  }
+	}
+	pthread_mutex_unlock(&lrf_cmd_mtx);
+      }
+      else ;
+
+      while(1){
+	if(send(sock[j], &send_flg, sizeof(char), 0) != 1) 
+	  tcp_retry("send()");
+	else break;
+      }
+    }
+  }
+
+  return NULL;
+}

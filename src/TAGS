@@ -1,0 +1,130 @@
+
+LRF_Show/lrf_show.c,80
+void draw_fundamental(11,415
+void draw_object(73,2607
+void lrf_show(116,4462
+
+LRF_Show/lrf_show.h,133
+#define __LRF_SHOW__2,21
+#define LRF_WINDOW_SIZE 4,43
+  long lrf_data_max;8,105
+  long lrf_data[lrf_data9,126
+} lrf_cmd;10,149
+
+LRF_Show/_lrf_show.h,317
+#define FIRST_RANGE 8,100
+#define LAST_RANGE 9,124
+#define PI 10,147
+CvSize ellipse;12,168
+lo_pt1,14,192
+lo_pt1, lo_pt2,14,192
+  la_pt1,15,209
+  la_pt1, la_pt2,15,209
+  slant_pt1,16,228
+  slant_pt1, slant_pt2,16,228
+  limit_pt1,17,252
+  limit_pt1, limit_pt2,17,252
+  object_pt,18,276
+  center_pt;19,290
+
+test/test.c,11
+main 6,62
+
+THF/find.h,346
+#define __FIND__2,17
+#define CAM_HEIGHT 4,35
+#define LRF_HEIGHT 5,82
+#define CAM_LRF_DIST 6,126
+#define CAM_DEG_HEIGHT 7,184
+#define CAM_DEG_WIDTH 8,237
+#define HEIGHT_PX 9,287
+#define WIDTH_PX 10,333
+  int first;13,394
+  int last;14,407
+} cutPoint;15,419
+  long lrf_data_max;18,449
+  long lrf_data[lrf_data19,470
+} lrf_cmd;20,493
+
+THF/_find.h,294
+#define PI 10,115
+#define MAX_RATE 12,136
+#define DECIDE 14,158
+static int hue[hue17,179
+static int saturation[saturation18,207
+static int value[value19,242
+static int x;21,273
+static int y;22,287
+static int tmp;23,301
+static int next_tmp;24,317
+int *color_vote;color_vote26,339
+
+THF/find.c,180
+int lrf_prepoll(3,22
+int cut_vision(72,2467
+int color_poll(133,4178
+void vote_compiler(185,5361
+int find_satuation(202,5610
+int find_value(241,6707
+int find_yellow(278,7792
+
+main.h,858
+#define REDUCTION 30,547
+IplImage* src_img;45,795
+IplImage* src_img_out;46,814
+IplImage* hsv_img;47,837
+IplImage* cut_img;48,856
+IplImage* cut_img_out;49,875
+IplImage* lrf_img[lrf_img50,898
+CvCapture* cap;52,921
+lrf_cmd lrf_cmd_data_cpy[lrf_cmd_data_cpy53,937
+double obj_stp[obj_stp56,968
+double obj_first_stp[obj_first_stp57,988
+double obj_last_stp[obj_last_stp58,1014
+long obj_data[obj_data59,1039
+long obj_first_data[obj_first_data60,1058
+long obj_last_data[obj_last_data61,1083
+cutPoint *obj_x;obj_x62,1107
+cutPoint *obj_y;obj_y63,1124
+int obj_cnt;64,1141
+int plate_deg[plate_deg65,1154
+int sock[sock68,1187
+lrf_cmd lrf_cmd_data[lrf_cmd_data69,1209
+const char* lrf_window_name[lrf_window_name72,1250
+const long max_dist[max_dist73,1322
+pthread_t lrf_cmd_thread_t;80,1393
+static pthread_mutex_t lrf_cmd_mtx 83,1441
+
+main.c,45
+int main(5,36
+void* lrf_cmd_thread(90,2484
+
+TCP_IP/client.c,121
+void tcp_retry(4,25
+void tcp_error(18,648
+int client_setup(34,1202
+int SplitString(64,2184
+int char2lrf_cmd(90,2682
+
+TCP_IP/client.h,412
+#define __CLIENT__2,19
+#define NUM_OF_TCP 4,39
+#define THF_CMD_FUCTOR 5,60
+#define NUM_OF_MAX_TARGET 6,85
+  int use;9,130
+  int area_number;10,185
+  int plate;11,221
+  int human;12,261
+  int num_of_plate;13,301
+  int num_of_human;14,347
+  int plate_dir[plate_dir15,393
+  int human_dir[human_dir16,449
+} thf_cmd;17,504
+  long lrf_data_max;21,549
+  long lrf_data[lrf_data22,570
+} lrf_cmd;23,593
+
+TCP_IP/_client.h,126
+const char* ServIP[ServIP10,408
+const unsigned short ServPort[ServPort11,489
+struct sockaddr_in ServAddr[ServAddr12,560
